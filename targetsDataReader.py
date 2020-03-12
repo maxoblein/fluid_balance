@@ -6,7 +6,6 @@ from datetime import datetime
 
 line_count = 0
 
-
 minutesSinceAdmission = []
 encounterId = []
 valueString = []
@@ -27,22 +26,20 @@ with open(filename) as csv_file:
             # timeOfDay.append(datetime.strptime(row[5], '%H:%M:%S')) # if we want it in the date and time format
         line_count += 1
 
-print(timeOfDay)
-
 # Change the target strings into integers 
-valueFloat = []
+targets = []
 for i in range(len(valueString)):
     valueString[i] = valueString[i].replace(" ", "")
 
     if valueString[i] == '0ml':
-        valueFloat.append(0)
+        targets.append(0)
 
     elif valueString[i][0] == '0' or valueString[i][0] == '+' or valueString[i][0] == '-':
         valueString[i] = valueString[i].replace("ml", "")
         valueString[i] = valueString[i].replace("to", ",")
         index = valueString[i].index(',')
-        valueFloat.append([float(valueString[i][:index]),float(valueString[i][(1+index):])])
-        
+        targets.append([float(valueString[i][:index]),float(valueString[i][(1+index):])])
+
     elif valueString[i] == 'Notapplicable':
-        valueFloat.append(0) # DON'T KNOW WHAT TO DO WITH THESE ONES
+        targets.append(0) # DON'T KNOW WHAT TO DO WITH THESE ONES
   
