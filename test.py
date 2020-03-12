@@ -6,3 +6,4 @@ Created on Thu Mar 12 15:25:30 2020
 """
 
 print('test')
+print('passed')
