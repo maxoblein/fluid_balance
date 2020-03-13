@@ -11,6 +11,7 @@ print(data.head())
 print(data.dtypes)
 
 patient1 = data.loc[data['encounterId']==822]
+patient1 = patient1.loc[patient1['record day'] == 2]
 print(patient1.head())
 
 patient1in = patient1.loc[patient1['longLabel']=='Total In (24hr)']
@@ -19,18 +20,26 @@ print(patient1in.head())
 patient1out = patient1.loc[patient1['longLabel']=='Total Out (24hr)']
 print(patient1in.head())
 
-intotal = patient1in['hourTotal']
+intotal = patient1in['cumTotal']
 intotal = intotal.values
 
-outtotal = patient1out['hourTotal']
+outtotal = patient1out['cumTotal']
 outtotal = outtotal.values
 
+print(len(intotal))
 
 
 balance = intotal + outtotal
 print(balance)
 
+darray = np.vstack((patient1in['minutes since admission'].values,balance))
+darray = darray.T
+print(darray)
+
+sortedarray = np.sort(darray,axis = 0)
+print(sortedarray)
+
 fig = plt.figure()
 ax = fig.add_subplot(111)
-ax.plot(patient1in['minutes since admission'].values,balance)
+ax.plot(sortedarray[:,0],sortedarray[:,1])
 plt.show()
