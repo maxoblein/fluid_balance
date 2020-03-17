@@ -27,6 +27,7 @@ def add_day_of_week(data):
 
 def fix_targets(targets):
     target_strings = targets['valueString'].values
+    target_strings_keep = targets['valueString'].values
     for i in range(len(target_strings)):
         target_strings[i] = target_strings[i].replace("ml", "")
         target_strings[i] = target_strings[i].replace(" to ", ",")
@@ -39,5 +40,6 @@ def fix_targets(targets):
         else:
             target_strings[i] = np.array([0.0,0.0])
 
+    targets['valueString'] = target_strings_keep
     targets['NumTargets'] = target_strings
     return targets
