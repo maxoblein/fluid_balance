@@ -5,6 +5,8 @@ import pandas as pd
 
 balances = pd.read_csv('data/anonymised_total_balances.csv')
 targets = pd.read_csv('data/anonymised_targets.csv')
+balances = balances.drop(balances.columns[0],axis=1)
+targets = targets.drop(targets.columns[0],axis=1)
 
 targetids = set(targets.encounterId.unique())
 sharedids = targetids.intersection(set(balances.encounterId.unique()))
