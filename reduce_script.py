@@ -11,3 +11,6 @@ sharedids = targetids.intersection(set(balances.encounterId.unique()))
 
 new_balances = balances[balances['encounterId'].isin(sharedids)]
 new_balances.to_csv('new_balances.csv')
+
+new_targets = targets[targets['encounterId'].isin(sharedids)]
+new_targets.to_csv('new_targets.csv')
