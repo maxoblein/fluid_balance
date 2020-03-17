@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import re
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def parseNumber(value, as_int=False):
@@ -20,7 +22,6 @@ def add_day_of_week(data):
 
     record_days = data['record day'].values
     day_of_week = (record_days % 7)
-    print(day_of_week)
     data['day of week'] = day_of_week
     return data
 
@@ -40,11 +41,3 @@ def fix_targets(targets):
 
     targets['NumTargets'] = target_strings
     return targets
-
-
-balances = pd.read_csv('new_balances.csv')
-targets = pd.read_csv('new_targets.csv')
-
-
-new_targets = fix_targets(targets)
-print(new_targets.head())
