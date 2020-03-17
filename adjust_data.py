@@ -40,8 +40,6 @@ def fix_targets(targets):
         else:
             target_strings[i] = np.array([0.0,0.0])
 
-    print(target_strings_keep)
-    print(target_strings)
     targets['valueString'] = target_strings_keep
     targets['NumTargets'] = target_strings
     return targets
