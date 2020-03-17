@@ -43,3 +43,8 @@ def fix_targets(targets):
     targets['valueString'] = target_strings_keep
     targets['NumTargets'] = target_strings
     return targets
+
+def remove_negatives(dataframe, colheading):
+    indexName = dataframe[dataframe[colheading] < 0].index
+    dataframe.drop(indexName, inplace=True)
+    return dataframe

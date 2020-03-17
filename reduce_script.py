@@ -14,9 +14,11 @@ sharedids = targetids.intersection(set(balances.encounterId.unique()))
 
 new_balances = balances[balances['encounterId'].isin(sharedids)]
 new_balances = add_day_of_week(new_balances)
+new_balances = remove_negatives(new_balances, 'minutes since admission')
 new_balances.to_csv('new_balances.csv')
 
 new_targets = targets[targets['encounterId'].isin(sharedids)]
 new_targets = add_day_of_week(new_targets)
 new_targets = fix_targets(new_targets)
+new_targets = remove_negatives(new_targets, 'minutes since admission')
 new_targets.to_csv('new_targets.csv')
