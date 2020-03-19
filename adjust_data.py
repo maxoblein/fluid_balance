@@ -25,6 +25,7 @@ def add_day_of_week(data):
     data['day of week'] = day_of_week
     return data
 
+
 def fix_targets(targets):
     target_strings = np.copy(targets['valueString'].values)
     target_strings_keep = np.copy(targets['valueString'].values)
@@ -44,7 +45,27 @@ def fix_targets(targets):
     targets['NumTargets'] = target_strings
     return targets
 
+
 def remove_negatives(dataframe, colheading):
     indexName = dataframe[dataframe[colheading] < 0].index
     dataframe.drop(indexName, inplace=True)
     return dataframe
+
+
+def reduce_data(balances, targets):
+    balances = balances.drop(balances.columns[0],axis=1)
+    targets = targets.drop(targets.columns[0],axis=1)
+
+    new_balances = remove_negatives(balances, 'minutes since admission')
+    new_targets = remove_negatives(targets, 'minutes since admission')
+
+    targetids = set(new_targets.encounterId.unique())
+    sharedids = targetids.intersection(set(new_balances.encounterId.unique()))
+
+    new_balances = new_balances[new_balances['encounterId'].isin(sharedids)]
+    new_balances = add_day_of_week(new_balances)
+
+    new_targets = new_targets[new_targets['encounterId'].isin(sharedids)]
+    new_targets = add_day_of_week(new_targets)
+    new_targets = fix_targets(new_targets)
+    return new_balances, new_targets
