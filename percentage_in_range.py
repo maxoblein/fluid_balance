@@ -19,7 +19,7 @@ def patient_bal_tar_plot(id,plot=False):
 
     new_balances, new_targets = reduce_data(balances, targets)
 
-    if len(argv) > 0:
+    if len(id) > 0:
         patientId = int(id[0])
     else:
         patientId = 17771 # Default patientId, can adjust this manually if no command line input
@@ -43,14 +43,14 @@ def patient_bal_tar_plot(id,plot=False):
         target_high[i] = target_stay[i][1]
     target_min = stay_targets['minutes since admission'].values
 
-    if plot == True
+    if plot == True:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.plot(fluid_min, fluid_cum)
         ax.scatter(target_min, target_low, linewidth=2, c='r')
         ax.scatter(target_min, target_high, linewidth=2, c='g')
         plt.show()
-        
+
 
 
 
