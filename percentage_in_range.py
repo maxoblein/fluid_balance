@@ -60,9 +60,20 @@ def patient_bal_tar_plot(id, plot=False, outcsv=False):
     # Set targets using timeline
     for i in range(len(target_min)):
         for j in range(len(fluid_min)):
-            if target_min[i] < plotMat[j][0]:
+            if plotMat[j][0] >= target_min[i]:
                 plotMat[j][2] = target_low[i]
                 plotMat[j][3] = target_high[i]
+
+
+    # Extract only rows with targets
+    compareMat = plotMat[plotMat[:,0] >= target_min[0]]
+    # Find distance to target average
+    dist_from_av = []
+    for i in range(len(compareMat)):
+        target_av = 0.5*(compareMat[i,2] + compareMat[i,3])
+        dist_from_av.append((compareMat[i,1] - target_av)**2)
+    Euc_dist = np.sqrt(sum(dist_from_av))
+    print('Total Euclidean distance for ID', patientId, 'is:', Euc_dist)
 
 
     if plot == True:
@@ -72,6 +83,9 @@ def patient_bal_tar_plot(id, plot=False, outcsv=False):
         ax.plot(plotMat[:,0], plotMat[:,2], c='r', label='Target lower bound')
         ax.plot(plotMat[:,0], plotMat[:,3], c='g', label='Target upper bound')
         ax.legend()
+        ax.set_title('Fluids plot for ID ' + str(patientId))
+        ax.set_xlabel('Minutes since admission')
+        ax.set_ylabel('Fluids balance [ml]')
         plt.show()
 
 
