@@ -18,21 +18,9 @@ def stay_data(balances, targets, id):
     return stay_balances, stay_targets
 
 
-def patient_bal_tar_plot(id=17771, plot=False, outcsv=False):
-    balances = pd.read_csv('data/anonymised_total_balances.csv')
-    targets = pd.read_csv('data/anonymised_targets.csv')
-
-    new_balances, new_targets = reduce_data(balances, targets)
-
-    # # Check commandline
-    # if len(id) > 0:
-    #     patientId = int(id[0])
-    # else:
-    #     # Default patientId, can adjust this manually if no command line input
-    #     patientId = 17771
-
+def patient_bal_tar_plot(balances, targets, id=17771, plot=False, outcsv=False):
     # Extract data for one patientId
-    stay_balances, stay_targets = stay_data(new_balances, new_targets, id)
+    stay_balances, stay_targets = stay_data(balances, targets, id)
 
     if outcsv == True:
         stay_balances.to_csv(str(id) + '_balances.csv')
@@ -54,27 +42,29 @@ def patient_bal_tar_plot(id=17771, plot=False, outcsv=False):
     target_min = stay_targets['minutes since admission'].values
 
     # Collect info for plot in one matrix
-    plotMat = np.zeros((len(fluid_min), 4))
-    plotMat[:,0] = fluid_min[:]
-    plotMat[:,1] = fluid_cum[:]
+    plotMat = np.zeros((len(fluid_min), 5))
+    plotMat[:,0] = fluid_min
+    plotMat[:,1] = fluid_cum
     # Set targets using timeline
     for i in range(len(target_min)):
         for j in range(len(fluid_min)):
             if plotMat[j][0] >= target_min[i]:
                 plotMat[j][2] = target_low[i]
                 plotMat[j][3] = target_high[i]
+    plotMat[:,4] = fluid_stay['record day'].values
 
 
     # Extract only rows with targets
     compareMat = plotMat[plotMat[:,0] >= target_min[0]]
     # Find distance to target average
-    dist_from_av = []
+    distMat = compareMat[:,:3]
     for i in range(len(compareMat)):
         target_av = 0.5*(compareMat[i,2] + compareMat[i,3])
-        dist_from_av.append((compareMat[i,1] - target_av)**2)
-    Euc_dist = np.sqrt(sum(dist_from_av))
-    print('Total Euclidean distance for ID', id, 'is:', Euc_dist)
-    return(Euc_dist)
+        distMat[i,1] = abs(compareMat[i,1] - target_av)
+    distMat[:,2] = compareMat[:,4]
+    # Add ID in first col
+    distMat = np.hstack((np.full((len(distMat), 1), id), distMat))
+
 
     if plot == True:
         fig = plt.figure()
@@ -88,24 +78,63 @@ def patient_bal_tar_plot(id=17771, plot=False, outcsv=False):
         ax.set_ylabel('Fluids balance [ml]')
         plt.show()
 
-def rank_patients():
+    return distMat
+
+
+def dist_csvs(balances, targets):
+    ids = np.unique(targets['encounterId'].values)
+    print(len(ids), 'unique IDs')
+    distTotal = np.array([])
+    distDaily = np.array([])
+    distHourly = np.array([])
+    for i in range(len(ids)):
+        distMat = patient_bal_tar_plot(balances, targets, id=ids[i])
+
+        # Check for empty matrix, happens when target is set after length of stay
+        if distMat.size:
+            pass
+        else:
+            continue
+
+        Euc_dist = np.sqrt(sum(distMat[:,2]**2))
+        mean_dist = np.mean(distMat[:,2])
+        dummyarr = np.array([ids[i], Euc_dist, mean_dist])
+        distTotal = np.vstack((distTotal, dummyarr)) if distTotal.size else dummyarr
+
+        for day in np.unique(distMat[:,3]):
+            distDay = np.where(distMat[:,3]==day, distMat[:,2], 0).sum()
+            dummyarr = np.array([ids[i], day, distDay])
+            distDaily = np.vstack((distDaily, dummyarr)) if distDaily.size else dummyarr
+
+        distHourly = np.vstack((distHourly, distMat)) if distHourly.size else distMat
+
+    # Use pandas for headers
+    distTotaldf = pd.DataFrame(data=distTotal, columns=['ID','EucDist','MeanDist'])
+    distTotaldf.to_csv('distTotal.csv', index=False)
+    distDailydf = pd.DataFrame(data=distDaily, columns=['ID','Day','TotalDayDist'])
+    distDailydf.to_csv('distDaily.csv', index=False)
+    distHourlydf = pd.DataFrame(data=distHourly, columns=['ID','Minute','DistFromTar','Day'])
+    distHourlydf.to_csv('distHourly.csv', index=False)
+
+    # Use these for raw data no header
+    #np.savetxt('distTotal.csv', distTotal, delimiter=',')
+    #np.savetxt('distDaily.csv', distDaily, delimiter=',')
+    #np.savetxt('distHourly.csv', distHourly, delimiter=',')
+
+    return
+
+
+def init():
     balances = pd.read_csv('data/anonymised_total_balances.csv')
     targets = pd.read_csv('data/anonymised_targets.csv')
     new_balances, new_targets = reduce_data(balances, targets)
 
-    ids = np.unique(new_targets['encounterId'].values)
-    print(np.size(ids))
-    distances = np.zeros(np.size(ids))
-    for i in range(np.size(ids)):
-        print(ids[i])
-        distances[i] = patient_bal_tar_plot(id=ids[i])
-
-    print(distances)
-
-
-
+    return new_balances, new_targets
 
 
 if __name__ == "__main__":
-    #patient_bal_tar_plot(sys.argv[1:], plot=True, outcsv=True)
-    rank_patients()
+    new_balances, new_targets = init()
+    if len(sys.argv[1:]) == 0:
+        dist_csvs(new_balances, new_targets)
+    else:
+        patient_bal_tar_plot(new_balances, new_targets, id=int(sys.argv[1]), plot=True, outcsv=True)
