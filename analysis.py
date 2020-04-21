@@ -12,14 +12,19 @@ def timeofday(distHour):
     print(max(distHour['DistFromTar'].values))
     minutes = distHour['Minute'].values
     hour_of_day = np.round(minutes/60)%24
-    print(hour_of_day)
+    hour_of_dayuni = np.unique(hour_of_day)
     distHour['hour of day'] = hour_of_day
-    distances = distHour['DistFromTar'].values
-    hours = distHour['hour of day'].values
+    hourvalues = []
+    for i in hour_of_dayuni:
+        hourindex = np.argwhere(hour_of_day == i)
+        arr = []
+        for j in hourindex:
+            arr.append(list(distHour['DistFromTar'].values[j])[-1])
+        hourvalues.append(arr)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.scatter(hours,distances,s=1)
+    ax.boxplot(hourvalues)
     ax.set_title('Target missing based on hour of day')
     ax.set_xlabel('hour of day')
     ax.set_ylabel('amount target missed by')
@@ -30,9 +35,21 @@ def dayofweek(distDaily):
     day = distDay['Day'].values
     weekday = day%7
     distDay['day of week'] = weekday
+    weekdayuni = np.unique(weekday)
+    dayvalues = []
+
+
+    for i in weekdayuni:
+        dayindex = np.argwhere(weekday == i)
+        arr = []
+        for j in dayindex:
+            arr.append(list(distDay['TotalDayDist'].values[j])[-1])
+        dayvalues.append(arr)
+
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.scatter(distDay['day of week'].values,distDay['TotalDayDist'].values,s=1)
+    ax.boxplot(dayvalues)
     ax.set_title('Target missing based on days of week')
     ax.set_xlabel('day of week')
     ax.set_ylabel('amount target missed by')
@@ -44,5 +61,5 @@ if __name__ == '__main__':
 
     distHour = pd.read_csv('distHourly.csv')
     distDay = pd.read_csv('distDaily.csv')
-    #timeofday(distHour)
-    dayofweek(distDay)
+    timeofday(distHour)
+    #dayofweek(distDay)
