@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from adjust_data import *
 import sys
+import pwlf
 
 def timeofday(distHour):
     #using the hourly distances can we decide
@@ -56,10 +57,41 @@ def dayofweek(distDaily):
     plt.show()
 
 
+def patientdata(distHour,id = 17771):
+    minutes = distHour['Minute'].values
+    hour_of_day = np.round(minutes/60)%24
+    hour_of_dayuni = np.unique(hour_of_day)
+    distHour['hour of day'] = hour_of_day
+    patientdf = distHour.loc[distHour['ID'] == id]
+    print(patientdf.head())
+    dayuni = np.unique(patientdf['Day'].values)
+    for i in dayuni[0:4]:
+        daydf = patientdf.loc[distHour['Day'] == i]
+        x = daydf['hour of day'].values
+        y = daydf['DistFromTar'].values
+        day_pwlf = pwlf.PiecewiseLinFit(x, y)
+
+        #fit with two segments
+        res = day_pwlf.fit(2)
+
+        xHat = np.linspace(min(x), max(x), num=10000)
+        yHat = day_pwlf.predict(xHat)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(x,y)
+        plt.plot(xHat, yHat, '-')
+        plt.show()
+
+
+
 
 if __name__ == '__main__':
 
     distHour = pd.read_csv('distHourly.csv')
     distDay = pd.read_csv('distDaily.csv')
-    timeofday(distHour)
+    #timeofday(distHour)
     #dayofweek(distDay)
+
+
+    patientdata(distHour)
