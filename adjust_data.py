@@ -39,7 +39,7 @@ def fix_targets(targets):
                 trange[j] = parseNumber(trange[j])
             target_strings[i] = np.array([float(trange[0]),float(trange[1])])
         else:
-            target_strings[i] = np.array([0.0,0.0])
+            target_strings[i] = np.array([-250.0,250.0])
 
     targets['valueString'] = target_strings_keep
     targets['NumTargets'] = target_strings

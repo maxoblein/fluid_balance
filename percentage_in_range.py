@@ -56,11 +56,15 @@ def patient_bal_tar_plot(balances, targets, id=17771, plot=False, outcsv=False):
 
     # Extract only rows with targets
     compareMat = plotMat[plotMat[:,0] >= target_min[0]]
-    # Find distance to target average
+    # Find distance to target boundary
     distMat = compareMat
     for i in range(len(compareMat)):
-        target_av = 0.5*(compareMat[i,2] + compareMat[i,3])
-        distMat[i,1] = abs(compareMat[i,1] - target_av)
+        if compareMat[i,1] < compareMat[i,2]:
+            distMat[i,1] = compareMat[i,1] - compareMat[i,2]
+        elif compareMat[i,1] > compareMat[i,3]:
+            distMat[i,1] = compareMat[i,1] - compareMat[i,3]
+        else:
+            distMat[i,1] = 0.0
     # Delete targets
     distMat = np.delete(distMat, [2, 3], 1)
     # Add ID in first col
@@ -98,12 +102,12 @@ def dist_csvs(balances, targets):
             continue
 
         Euc_dist = np.sqrt(sum(distMat[:,2]**2))
-        mean_dist = np.mean(distMat[:,2])
+        mean_dist = np.mean(abs(distMat[:,2]))
         dummyarr = np.array([ids[i], Euc_dist, mean_dist])
         distTotal = np.vstack((distTotal, dummyarr)) if distTotal.size else dummyarr
 
         for day in np.unique(distMat[:,3]):
-            distDay = np.where(distMat[:,3]==day, distMat[:,2], 0).sum()
+            distDay = abs(np.where(distMat[:,3]==day, distMat[:,2], 0)).sum()
             dummyarr = np.array([ids[i], day, distDay])
             distDaily = np.vstack((distDaily, dummyarr)) if distDaily.size else dummyarr
 
