@@ -82,6 +82,10 @@ def patientdata(distHour,id = 17771):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.scatter(x,y)
+        ax.set_title('Plot of patient diatance from target throughout the day fit using a piecewise linear regression',fontsize =16)
+        ax.set_xlabel('Hour of day',fontsize =14)
+        ax.set_ylabel('Distance from target',fontsize =14)
+
         plt.plot(xHat, yHat, '-')
         plt.show()
 
