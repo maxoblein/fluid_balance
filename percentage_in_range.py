@@ -42,7 +42,7 @@ def patient_bal_tar_plot(balances, targets, id=17771, plot=False, outcsv=False):
     target_min = stay_targets['minutes since admission'].values
 
     # Collect info for plot in one matrix
-    plotMat = np.zeros((len(fluid_min), 5))
+    plotMat = np.zeros((len(fluid_min), 6))
     plotMat[:,0] = fluid_min
     plotMat[:,1] = fluid_cum
     # Set targets using timeline
@@ -52,16 +52,17 @@ def patient_bal_tar_plot(balances, targets, id=17771, plot=False, outcsv=False):
                 plotMat[j][2] = target_low[i]
                 plotMat[j][3] = target_high[i]
     plotMat[:,4] = fluid_stay['record day'].values
-
+    plotMat[:,5] = fluid_stay['time of day'].replace('[^\d.]', '', regex=True).astype(float)/10000
 
     # Extract only rows with targets
     compareMat = plotMat[plotMat[:,0] >= target_min[0]]
     # Find distance to target average
-    distMat = compareMat[:,:3]
+    distMat = compareMat
     for i in range(len(compareMat)):
         target_av = 0.5*(compareMat[i,2] + compareMat[i,3])
         distMat[i,1] = abs(compareMat[i,1] - target_av)
-    distMat[:,2] = compareMat[:,4]
+    # Delete targets
+    distMat = np.delete(distMat, [2, 3], 1)
     # Add ID in first col
     distMat = np.hstack((np.full((len(distMat), 1), id), distMat))
 
@@ -113,7 +114,7 @@ def dist_csvs(balances, targets):
     distTotaldf.to_csv('distTotal.csv', index=False)
     distDailydf = pd.DataFrame(data=distDaily, columns=['ID','Day','TotalDayDist'])
     distDailydf.to_csv('distDaily.csv', index=False)
-    distHourlydf = pd.DataFrame(data=distHourly, columns=['ID','Minute','DistFromTar','Day'])
+    distHourlydf = pd.DataFrame(data=distHourly, columns=['ID','Minute','DistFromTar','Day', 'Time'])
     distHourlydf.to_csv('distHourly.csv', index=False)
 
     # Use these for raw data no header
