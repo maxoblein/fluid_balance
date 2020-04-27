@@ -67,7 +67,7 @@ def patientdata(distHour,id = 17771):
     dayuni = np.unique(patientdf['Day'].values)
 
     #change counter for plotting different days
-    for i in dayuni[6:]:
+    for i in dayuni[7:]:
         daydf = patientdf.loc[distHour['Day'] == i]
         x = daydf['hour of day'].values
         y = daydf['DistFromTar'].values
