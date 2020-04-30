@@ -1,4 +1,4 @@
-import csv
+# import csv
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -56,38 +56,72 @@ def dayofweek(distDaily):
     ax.set_ylabel('amount target missed by')
     plt.show()
 
+def find_outliers(data):
+    m = 2
+    u = np.mean(data)
+    s = np.std(data)
+    filtered = [e for e in data if (u - 2 * s > e < u + 2 * s)]
+    return filtered
 
-def patientdata(distHour,id = 17771):
+
+def patientdata(distHour,id = 17771,plot=False):
     minutes = distHour['Minute'].values
     hour_of_day = np.round(minutes/60)%24
     hour_of_dayuni = np.unique(hour_of_day)
     distHour['hour of day'] = hour_of_day
     patientdf = distHour.loc[distHour['ID'] == id]
-    print(patientdf.head())
     dayuni = np.unique(patientdf['Day'].values)
-
+    split_list = []
     #change counter for plotting different days
-    for i in dayuni[7:]:
+    for i in dayuni:
         daydf = patientdf.loc[distHour['Day'] == i]
         x = daydf['hour of day'].values
         y = daydf['DistFromTar'].values
+
         day_pwlf = pwlf.PiecewiseLinFit(x, y)
 
         #fit with two segments
         res = day_pwlf.fit(2)
+        break_point = res[1]
 
         xHat = np.linspace(min(x), max(x), num=10000)
         yHat = day_pwlf.predict(xHat)
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.scatter(x,y)
-        ax.set_title('Plot of patient diatance from target throughout the day fit using a piecewise linear regression',fontsize =16)
-        ax.set_xlabel('Hour of day',fontsize =14)
-        ax.set_ylabel('Distance from target',fontsize =14)
+        predicted_values = day_pwlf.predict(x)
+        diff = predicted_values- y
+        error = np.linalg.norm(diff,2)
 
-        plt.plot(xHat, yHat, '-')
-        plt.show()
+        gradients = day_pwlf.calc_slopes()
+        if abs(gradients[0]) > 350 or abs(gradients[1]) > 350:
+            split = 1
+
+        else:
+            split = 0
+            distdifflist =[]
+            for j in range(len(y)-1):
+                distdiff = y[j+1] - y[j]
+                distdifflist.append(distdiff)
+            outliers = find_outliers(distdifflist)
+            if len(outliers) > 0:
+                split = 1
+
+
+
+
+
+        split_list.append(split)
+        if plot == True:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.scatter(x,y)
+            ax.set_title('Plot of patient diatance from target throughout the day fit using a piecewise linear regression',fontsize =16)
+            ax.set_xlabel('Hour of day',fontsize =14)
+            ax.set_ylabel('Distance from target',fontsize =14)
+
+            plt.plot(xHat, yHat, '-')
+            plt.show()
+
+    return(split_list)
 
 
 
@@ -98,6 +132,16 @@ if __name__ == '__main__':
     distDay = pd.read_csv('distDaily.csv')
     #timeofday(distHour)
     #dayofweek(distDay)
+    uniqueids = np.unique(distHour['ID'].values)
+    notfit = []
+    print(distDay.shape)
+    for id in uniqueids:
+        split_list = patientdata(distHour,id)
+        notfit = notfit + split_list
 
 
-    patientdata(distHour)
+
+    distout = distDay
+    distout['pwlf good'] = notfit
+
+    distout.to_csv('doespwlffit.csv')
