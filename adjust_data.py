@@ -70,26 +70,25 @@ def reduce_data(balances, targets):
     new_targets = fix_targets(new_targets)
     return new_balances, new_targets
 
+
 def patient_summary():
 
     summaries = pd.read_csv('data/anonymised_patient_summary.csv')
     patient_summaries_reduced = {}
     patient_summaries_full = {}
 
-    patient_summaries_full['Key'] = ['Age','Gender','Weight','Height']
+    patient_summaries_full['Key'] = ['Age','Gender','Weight','Height', 'Length of Stay']
 
     patients = summaries['encounterId'].values
     age = summaries['age'].values    
     gender = summaries['gender'].values
     weight = summaries['weight'].values
     height = summaries['height'].values
+    lengthOfStay = summaries['lengthOfStay (mins)'].values
 
     for i in range(len(patients)):
-        patient_summaries_full[patients[i]] = [age[i],gender[i],weight[i],height[i]]
+        patient_summaries_full[patients[i]] = [age[i],gender[i],weight[i],height[i],lengthOfStay[i]]
        
-        # if type(age[i]) in [float,int] and gender[i] in ['Male','Female'] and type(weight[i]) in [float,int] and type(height[i]) in [float,int]:
-            # patient_summaries_reduced[patients[i]] = [age[i],gender[i],weight[i],height[i]]
-
     return patient_summaries_full
 
 
