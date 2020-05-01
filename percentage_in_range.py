@@ -126,7 +126,39 @@ def dist_csvs(balances, targets):
     #np.savetxt('distDaily.csv', distDaily, delimiter=',')
     #np.savetxt('distHourly.csv', distHourly, delimiter=',')
 
+    return distTotaldf, distDailydf, distHourlydf
+
+
+def percentage_csv(distHourlydf):
+    ontargetTotal = distHourlydf.loc[distHourlydf['DistFromTar'] == 0.0]
+    percent_in_range_total = 100 * len(ontargetTotal.index) / len(distHourlydf.index)
+    print('%.2f percent of time in target range across all patients' % percent_in_range_total)
+
+    midnight = distHourlydf.loc[distHourlydf['Time'] == 0.0]
+    ontargetMidnight = midnight.loc[midnight['DistFromTar'] == 0.0]
+    percent_at_midnight = 100 * len(ontargetMidnight.index) / len(midnight.index)
+    print('%.2f percent of time in target range at midnight (00:00)' % percent_at_midnight)
+
+
+    # Find pecentage for each patient
+    uniqueids = np.unique(distHourlydf['ID'].values)
+    percent_list = np.array([])
+    for id in uniqueids:
+        percent_in_range = percentage_in_range(distHourlydf, id)
+        dummyarr = np.array([id, percent_in_range])
+        percent_list = np.vstack((percent_list, dummyarr)) if percent_list.size else dummyarr
+
+    np.savetxt('percentonTar.csv', percent_list, delimiter=',')
+
     return
+
+
+def percentage_in_range(distHourlydf, id):
+    patientdf = distHourlydf.loc[distHourlydf['ID'] == int(id)]
+    ontarget = patientdf.loc[patientdf['DistFromTar'] == 0.0]
+    percent_in_range = 100 * len(ontarget.index) / len(patientdf.index)
+
+    return percent_in_range
 
 
 def init():
@@ -140,6 +172,13 @@ def init():
 if __name__ == "__main__":
     new_balances, new_targets = init()
     if len(sys.argv[1:]) == 0:
-        dist_csvs(new_balances, new_targets)
+        distTotaldf, distDailydf, distHourlydf = dist_csvs(new_balances, new_targets)
+        percentage_csv(distHourlydf)
     else:
+        try:
+            distHour = pd.read_csv('distHourly.csv')
+            percent_in_range = percentage_in_range(distHourlydf=distHour, id=int(sys.argv[1]))
+            print('%.2f percent of time in target range for patient ID ' % percent_in_range + str(sys.argv[1]))
+        except:
+            print('Check the correct distHourly.csv is in the same folder')
         patient_bal_tar_plot(new_balances, new_targets, id=int(sys.argv[1]), plot=True, outcsv=True)
