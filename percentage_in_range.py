@@ -121,11 +121,6 @@ def dist_csvs(balances, targets):
     distHourlydf = pd.DataFrame(data=distHourly, columns=['ID','Minute','DistFromTar','Day', 'Time'])
     distHourlydf.to_csv('distHourly.csv', index=False)
 
-    # Use these for raw data no header
-    #np.savetxt('distTotal.csv', distTotal, delimiter=',')
-    #np.savetxt('distDaily.csv', distDaily, delimiter=',')
-    #np.savetxt('distHourly.csv', distHourly, delimiter=',')
-
     return distTotaldf, distDailydf, distHourlydf
 
 
@@ -148,7 +143,8 @@ def percentage_csv(distHourlydf):
         dummyarr = np.array([id, percent_in_range])
         percent_list = np.vstack((percent_list, dummyarr)) if percent_list.size else dummyarr
 
-    np.savetxt('percentonTar.csv', percent_list, delimiter=',')
+    percentonTar = pd.DataFrame(data=percent_list, columns=['ID','Percentage'])
+    percentonTar.to_csv('percentonTar.csv', index=False)
 
     return
 
