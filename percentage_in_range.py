@@ -124,7 +124,7 @@ def dist_csvs(balances, targets):
     return distTotaldf, distDailydf, distHourlydf
 
 
-def percentage_csv(distHourlydf):
+def percentage_csvs(distHourlydf, plot=False):
     ontargetTotal = distHourlydf.loc[distHourlydf['DistFromTar'] == 0.0]
     percent_in_range_total = 100 * len(ontargetTotal.index) / len(distHourlydf.index)
     print('%.2f percent of time in target range across all patients' % percent_in_range_total)
@@ -139,18 +139,57 @@ def percentage_csv(distHourlydf):
     uniqueids = np.unique(distHourlydf['ID'].values)
     percent_list = np.array([])
     for id in uniqueids:
-        percent_in_range = percentage_in_range(distHourlydf, id)
+        percent_in_range = percentage_in_range(distHourlydf, 'ID', id)
         dummyarr = np.array([id, percent_in_range])
         percent_list = np.vstack((percent_list, dummyarr)) if percent_list.size else dummyarr
 
     percentonTar = pd.DataFrame(data=percent_list, columns=['ID','Percentage'])
     percentonTar.to_csv('percentonTar.csv', index=False)
 
+    # Find percentage for each day
+    distHourlydf['Weekday'] = distHourlydf['Day'].values%7
+    weekdays = np.unique(distHourlydf['Weekday'].values)
+    percent_day = np.array([])
+    for day in weekdays:
+        percent_in_range = percentage_in_range(distHourlydf, 'Weekday', day)
+        dummyarr = np.array([day, percent_in_range])
+        percent_day = np.vstack((percent_day, dummyarr)) if percent_day.size else dummyarr
+
+    percentDay = pd.DataFrame(data=percent_day, columns=['Weekday','Percentage'])
+    percentDay.to_csv('percentDay.csv', index=False)
+
+    # Find percentage for each hour
+    hours = np.unique(distHourlydf['Time'].values)
+    percent_hour = np.array([])
+    for hour in hours:
+        percent_in_range = percentage_in_range(distHourlydf, 'Time', hour)
+        dummyarr = np.array([hour, percent_in_range])
+        percent_hour = np.vstack((percent_hour, dummyarr)) if percent_hour.size else dummyarr
+
+    percentHour = pd.DataFrame(data=percent_hour, columns=['Time','Percentage'])
+    percentHour.to_csv('percentHour.csv', index=False)
+
+
+    if plot == True:
+        time = np.arange(1, 25, step=1)
+        percent = percentHour['Percentage'].values
+        percent = np.append(percent, percent[0])
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(time, percent[1:], c='b', label='Percentage in range')
+        ax.legend()
+        ax.set_title('Percentage of patients in target range')
+        ax.set_xlabel('Time of day [hour]')
+        ax.set_ylabel('Percentage [%]')
+        ax.set_xticks(time)
+        plt.show()
+
     return
 
 
-def percentage_in_range(distHourlydf, id):
-    patientdf = distHourlydf.loc[distHourlydf['ID'] == int(id)]
+def percentage_in_range(distHourlydf, column, condition):
+    patientdf = distHourlydf.loc[distHourlydf[column] == condition]
     ontarget = patientdf.loc[patientdf['DistFromTar'] == 0.0]
     percent_in_range = 100 * len(ontarget.index) / len(patientdf.index)
 
@@ -169,11 +208,11 @@ if __name__ == "__main__":
     new_balances, new_targets = init()
     if len(sys.argv[1:]) == 0:
         distTotaldf, distDailydf, distHourlydf = dist_csvs(new_balances, new_targets)
-        percentage_csv(distHourlydf)
+        percentage_csvs(distHourlydf)
     else:
         try:
             distHour = pd.read_csv('distHourly.csv')
-            percent_in_range = percentage_in_range(distHourlydf=distHour, id=int(sys.argv[1]))
+            percent_in_range = percentage_in_range(distHourlydf=distHour, column='ID', condition=int(sys.argv[1]))
             print('%.2f percent of time in target range for patient ID ' % percent_in_range + str(sys.argv[1]))
         except:
             print('Check the correct distHourly.csv is in the same folder')
