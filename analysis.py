@@ -114,7 +114,7 @@ def patientdata(distHour,id = 17771,plot=False):
             fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.scatter(x,y)
-            ax.set_title('Plot of patient diatance from target throughout the day fit using a piecewise linear regression',fontsize =16)
+            ax.set_title('Example of a bad fit using piecewise linear regression',fontsize =16)
             ax.set_xlabel('Hour of day',fontsize =14)
             ax.set_ylabel('Distance from target',fontsize =14)
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     notfit = []
     print(distDay.shape)
     for id in uniqueids:
-        split_list = patientdata(distHour,id)
+        split_list = patientdata(distHour,id,plot=True)
         notfit = notfit + split_list
 
 
