@@ -5,6 +5,8 @@ import pandas as pd
 from adjust_data import *
 import sys
 from matplotlib.ticker import PercentFormatter
+import scipy.stats as stats
+from labellines import *
 
 
 def calc_distances(distances_df,dist_type,plot_type,individual_patient):
@@ -18,8 +20,8 @@ def calc_distances(distances_df,dist_type,plot_type,individual_patient):
     if plot_type == 'all':
         distances = distances_df['DistFromTar'].values
 
-    elif plot_type == 'midnight':
-        distances_df = distances_df.loc[distances_df['Time'] == 0]   
+    elif type(plot_type) == int:
+        distances_df = distances_df.loc[distances_df['Time'] == plot_type]   
         distances = distances_df['DistFromTar'].values
 
     elif plot_type == 'furthest': 
@@ -53,6 +55,29 @@ def calc_distances(distances_df,dist_type,plot_type,individual_patient):
 
     return distances
 
+def plot_hist(fig,ax,distance_range,distances,title,bars=True,line=True,label=None,density=True):
+
+    if bars:
+        n,x,_ = ax.hist(distances,distance_range,histtype=u'step',density=density)
+    else:
+        n,x = np.histogram(distances,distance_range,density=density)
+    if line:
+        density = stats.gaussian_kde(distances)
+        # print(density._compute_covariance())
+        plt.plot(x, density(x),label=label)
+    if title:
+        ax.set_title(title)
+    ax.set_xlabel('Distance from Target Range')
+    if density:
+        ax.set_ylabel('Density Function')
+    else:
+        ax.set_ylabel('Proportion of Values Within Range')
+    # plt.gca().yaxis.set_major_formatter(PercentFormatter(len(distances)))
+    plt.gca().xaxis.set_major_formatter(PercentFormatter(500))
+
+    return n,x
+
+
 def plot_distances(distances_df, 
                    dist_type='euclid',
                    plot_type='all',
@@ -71,80 +96,33 @@ def plot_distances(distances_df,
     distance_range = np.arange(-5025,5025,50) # Range of x on histogram
     
     if plot == True:
-        plt.hist(distances,distance_range)
-        plt.xlabel('Distance from Target Range')
-        plt.ylabel('Proportion of Values Within Range')
-        plt.gca().yaxis.set_major_formatter(PercentFormatter(len(distances)))
-        plt.gca().xaxis.set_major_formatter(PercentFormatter(500))
-        plt.tight_layout()
+
+        fig1 = plt.figure(figsize = [6,5])
+        ax1 = fig1.add_subplot(1,1,1)
+        plot_hist(fig1,ax1,distance_range,distances,None,bars=True,line=True)
+        fig1.tight_layout()
         plt.show()
 
     return distances
 
 def plot_4_hist(distances_df,plot=True):
 
-    all_distances = plot_distances(euc_distances, 
-                   dist_type='euclid',
-                   plot_type='all', 
-                   plot=False,
-                   zero_distances=True,
-                   individual_patient=None)
-
-    average_distances = plot_distances(euc_distances, 
-                   dist_type='euclid',
-                   plot_type='average', 
-                   plot=False,
-                   zero_distances=True,
-                   individual_patient=None)
-
-    furthest_distances = plot_distances(euc_distances, 
-                   dist_type='euclid',
-                   plot_type='furthest', 
-                   plot=False,
-                   zero_distances=True,
-                   individual_patient=None)
-
-    midnight_distances = plot_distances(euc_distances, 
-                   dist_type='euclid',
-                   plot_type='midnight', 
-                   plot=False,
-                   zero_distances=True,
-                   individual_patient=None)
+    all_distances = plot_distances(euc_distances,dist_type='euclid',plot_type='all',plot=False,zero_distances=True,individual_patient=None)
+    average_distances = plot_distances(euc_distances,dist_type='euclid',plot_type='average',plot=False,zero_distances=True,individual_patient=None)
+    furthest_distances = plot_distances(euc_distances,dist_type='euclid',plot_type='furthest',plot=False,zero_distances=True,individual_patient=None)
+    midnight_distances = plot_distances(euc_distances,dist_type='euclid',plot_type=0,plot=False,zero_distances=True,individual_patient=None)
 
     distance_range = np.arange(-5025,5025,50)
 
     fig1 = plt.figure(figsize = [14,12])
     ax1 = fig1.add_subplot(2,2,1)
-    ax1.hist(all_distances,distance_range)
-    ax1.set_title("All Distances")
-    ax1.set_xlabel('Distance from Target Range')
-    ax1.set_ylabel('Proportion of Values Within Range')
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(len(all_distances)))
-    plt.gca().xaxis.set_major_formatter(PercentFormatter(500))
-
+    plot_hist(fig1,ax1,distance_range,all_distances,"All Distances",bars=True,line=False)
     ax2 = fig1.add_subplot(2,2,2)
-    ax2.hist(average_distances,distance_range)
-    ax2.set_title("Average Patient Distances")
-    ax2.set_xlabel('Distance from Target Range')
-    ax2.set_ylabel('Proportion of Values Within Range')
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(len(average_distances)))
-    plt.gca().xaxis.set_major_formatter(PercentFormatter(500))
-
+    plot_hist(fig1,ax2,distance_range,average_distances,"Average Patient Distances",bars=True,line=False)
     ax3 = fig1.add_subplot(2,2,3)
-    ax3.hist(furthest_distances,distance_range)
-    ax3.set_title("Furthest Patient Distances")
-    ax3.set_xlabel('Distance from Target Range')
-    ax3.set_ylabel('Proportion of Values Within Range')
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(len(furthest_distances)))
-    plt.gca().xaxis.set_major_formatter(PercentFormatter(500))
-
+    plot_hist(fig1,ax3,distance_range,furthest_distances,"Furthest Patient Distances",bars=True,line=False)
     ax4 = fig1.add_subplot(2,2,4)
-    ax4.hist(midnight_distances,distance_range)
-    ax4.set_title("Midnight Patient Distances")
-    ax4.set_xlabel('Distance from Target Range')
-    ax4.set_ylabel('Proportion of Values Within Range')
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(len(midnight_distances)))
-    plt.gca().xaxis.set_major_formatter(PercentFormatter(500))
+    plot_hist(fig1,ax4,distance_range,midnight_distances,"Midnight Distances",bars=True,line=False)
 
     # plt.subplots_adjust(top=5,bottom=0.98)
     fig1.tight_layout()
@@ -154,19 +132,43 @@ def plot_4_hist(distances_df,plot=True):
 
     return None
 
+def plot_multiple_densities(distances_df,plot=True):
+
+    # 0_distances = plot_distances(euc_distances,dist_type='euclid',plot_type=0,plot=False,zero_distances=True,individual_patient=None)
+    
+    distance_range = np.arange(-5025,5025,50) # Range of x on histogram
+
+    if plot == True:
+
+        fig1 = plt.figure(figsize = [12,10])
+        ax1 = fig1.add_subplot(1,1,1)
+        for i in range(24):
+            distances = plot_distances(euc_distances,dist_type='euclid',plot_type=i,plot=False,zero_distances=False,individual_patient=None)
+            plot_hist(fig1,ax1,distance_range,distances,None,bars=False,line=True,label=str(i))
+        # labelLines(plt.gca().get_lines())#,zorder=2.5)
+        fig1.tight_layout()
+        plt.legend()
+        plt.show()
+
+    return 
+
 if __name__ == '__main__':
 
     euc_distances = pd.read_csv('distHourly.csv')
      
     # # Generates percentage distances fron distHourly file
     # plot_distances(euc_distances, 
-    #              dist_type='euclid',
-    #              plot_type='average', 
-    #              plot=True,
-    #              zero_distances=False,
-    #              individual_patient=None)
+    #                dist_type='euclid',
+    #                plot_type='average', 
+    #                plot=True,
+    #                zero_distances=False,
+    #                individual_patient=None)
 
+    # # Plots the 4 bar charts on one figure
     # plot_4_hist(euc_distances,plot=True)
+
+    # # Plotting multiple lines on same graph
+    # plot_multiple_densities(euc_distances)
 
 
 
